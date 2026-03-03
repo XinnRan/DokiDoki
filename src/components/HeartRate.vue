@@ -1,31 +1,40 @@
 <template>
   <div class="heart-rate-component">
+    <!-- 头部区域 -->
     <div class="header">
       <h1>DokiDoki</h1>
+      <!-- 状态指示器 -->
       <div class="status-indicator" :class="statusClass"></div>
     </div>
     
+    <!-- 心率监测区域 -->
     <div class="heart-rate-container">
+      <!-- 心跳图标 -->
       <div class="heart-icon" :class="{ beating: isConnected }">
         <svg viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
         </svg>
       </div>
       
+      <!-- 心率值显示 -->
       <div class="heart-rate-value" :class="{ connected: isConnected }">
         {{ heartRate }}
         <span class="unit">BPM</span>
       </div>
       
+      <!-- 连接状态 -->
       <div class="status" :class="statusClass">
         {{ status }}
       </div>
+      <!-- 设备名称 -->
       <div v-if="isConnected && currentDevice" class="device-name">
         {{ currentDevice }}
       </div>
     </div>
     
+    <!-- 控制按钮区域 -->
     <div class="controls">
+      <!-- 连接/断开按钮 -->
       <button 
         @click="toggleConnection"
         :disabled="isScanning"
@@ -34,6 +43,7 @@
         {{ isConnected ? '断开连接' : isScanning ? '扫描中...' : '连接设备' }}
       </button>
       
+      <!-- 悬浮窗口控制按钮 -->
       <button 
         v-if="isConnected"
         @click="toggleFloatingWindow"
@@ -42,6 +52,7 @@
         {{ floatingWindowVisible ? '关闭悬浮窗' : '显示悬浮窗' }}
       </button>
       
+      <!-- 设置按钮 -->
       <button 
         v-if="isConnected"
         @click="openSettings"
@@ -50,7 +61,7 @@
       </button>
     </div>
     
-    <!-- 🔴 使用 Teleport 将对话框渲染到 body -->
+    <!-- 使用 Teleport 将对话框渲染到 body -->
     <Teleport to="body">
       <!-- 设备选择对话框 -->
       <div v-if="showDeviceDialog" class="dialog-overlay" @click.self="closeDeviceDialog">
@@ -60,6 +71,7 @@
             <button class="close-button" @click="closeDeviceDialog">×</button>
           </div>
           
+          <!-- 扫描中状态 -->
           <div v-if="isScanning" class="scanning2">
             <div class="spinner"></div>
             <p>正在扫描心率设备...</p>
@@ -68,6 +80,7 @@
             </div>
           </div>
           
+          <!-- 设备列表 -->
           <div v-else class="device-list">
             <div 
               v-for="device in devices" 
@@ -92,6 +105,7 @@
               </div>
             </div>
             
+            <!-- 无设备提示 -->
             <div v-if="devices.length === 0" class="no-devices">
               <div class="no-devices-icon">🔍</div>
               <p>未发现心率设备</p>
@@ -114,6 +128,7 @@
           </div>
           
           <div class="settings-content">
+            <!-- 窗口属性设置 -->
             <div class="settings-section">
               <h3>窗口属性</h3>
               
@@ -144,6 +159,7 @@
               </div>
             </div>
             
+            <!-- 显示样式设置 -->
             <div class="settings-section">
               <h3>显示样式</h3>
               <div class="style-preview">
@@ -183,26 +199,35 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-// 状态变量
-const heartRate = ref(0)
-const isConnected = ref(false)
-const isScanning = ref(false)
-const showDeviceDialog = ref(false)
-const devices = ref([])
-const scanInterval = ref(null)
-const floatingWindowVisible = ref(false)
-const showSettings = ref(false)
-const currentDevice = ref('')
+/**
+ * 心率监测组件
+ * 主要功能：
+ * 1. 蓝牙设备扫描和连接
+ * 2. 实时心率数据显示
+ * 3. 悬浮窗口控制
+ * 4. 设备管理和设置
+ */
 
-// 设置变量
+// ========== 状态变量 ==========
+const heartRate = ref(0)  // 心率值
+const isConnected = ref(false)  // 是否连接
+const isScanning = ref(false)  // 是否正在扫描
+const showDeviceDialog = ref(false)  // 设备选择对话框显示状态
+const devices = ref([])  // 设备列表
+const scanInterval = ref(null)  // 扫描定时器
+const floatingWindowVisible = ref(false)  // 悬浮窗口可见状态
+const showSettings = ref(false)  // 设置对话框显示状态
+const currentDevice = ref('')  // 当前设备名称
+
+// ========== 设置变量 ==========
 const settings = ref({
-  mouseThrough: false,
-  opacity: 0.9,
-  alwaysOnTop: true,
-  style: 'simple'
+  mouseThrough: false,  // 鼠标穿透
+  opacity: 0.9,  // 透明度
+  alwaysOnTop: true,  // 始终置顶
+  style: 'simple'  // 显示样式
 })
 
-// 可用的显示样式
+// ========== 可用的显示样式 ==========
 const availableStyles = [
   { id: 'simple', name: '简约风格' },
   { id: 'modern', name: '现代风格' },
@@ -214,27 +239,39 @@ const availableStyles = [
   { id: 'gradient', name: '渐变风格' }
 ]
 
-// 计算属性
+// ========== 计算属性 ==========
+/**
+ * 当前状态文本
+ */
 const status = computed(() => {
   if (isScanning.value) return '扫描中...'
   if (isConnected.value) return '已连接'
   return '未连接'
 })
 
+/**
+ * 当前状态样式类
+ */
 const statusClass = computed(() => {
   if (isScanning.value) return 'scanning'
   if (isConnected.value) return 'connected'
   return 'disconnected'
 })
 
-// 信号强度计算
+// ========== 工具函数 ==========
+/**
+ * 计算信号强度等级
+ * @param {number} rssi 信号强度值
+ * @returns {number} 信号强度等级 (1-4)
+ */
 function getSignalStrength(rssi) {
-  if (rssi > -50) return 4
-  if (rssi > -60) return 3
-  if (rssi > -70) return 2
-  return 1
+  if (rssi > -50) return 4  // 强
+  if (rssi > -60) return 3  // 中等
+  if (rssi > -70) return 2  // 弱
+  return 1  // 很弱
 }
 
+// ========== API 调用 ==========
 // 使用统一的 API 名称
 const api = window.electronAPI || window.bluetoothAPI
 
@@ -243,14 +280,19 @@ if (!api) {
   console.error('API 不存在：window.electronAPI 和 window.bluetoothAPI 都未定义')
 }
 
-// 监听心率数据
+// ========== 事件监听 ==========
+/**
+ * 设置心率数据监听
+ */
 function setupHeartRateListener() {
   api?.onHeartRateData((data) => {
     heartRate.value = data.bpm
   })
 }
 
-// 添加设置更新监听
+/**
+ * 设置悬浮窗口设置更新监听
+ */
 function setupSettingsListener() {
   api?.onFloatingWindowSettingsUpdated((newSettings) => {
     console.log('收到设置更新:', newSettings)
@@ -258,7 +300,10 @@ function setupSettingsListener() {
   })
 }
 
-// 加载悬浮窗设置
+// ========== 业务逻辑 ==========
+/**
+ * 加载悬浮窗设置
+ */
 async function loadFloatingWindowSettings() {
   try {
     const result = await api?.getFloatingWindowSettings()
@@ -271,7 +316,9 @@ async function loadFloatingWindowSettings() {
   }
 }
 
-// 切换连接状态
+/**
+ * 切换连接状态
+ */
 async function toggleConnection() {
   if (isConnected.value) {
     await disconnect()
@@ -280,13 +327,17 @@ async function toggleConnection() {
   }
 }
 
-// 打开设备选择对话框
+/**
+ * 打开设备选择对话框
+ */
 async function openDeviceDialog() {
   showDeviceDialog.value = true
   await startScan()
 }
 
-// 关闭设备选择对话框
+/**
+ * 关闭设备选择对话框
+ */
 function closeDeviceDialog() {
   showDeviceDialog.value = false
   isScanning.value = false
@@ -297,7 +348,9 @@ function closeDeviceDialog() {
   }
 }
 
-// 开始扫描设备
+/**
+ * 开始扫描设备
+ */
 async function startScan() {
   isScanning.value = true
   devices.value = []
@@ -310,6 +363,7 @@ async function startScan() {
       return
     }
     
+    // 定时获取设备列表
     scanInterval.value = setInterval(async () => {
       const scannedDevices = await api?.getDevices()
       devices.value = scannedDevices || []
@@ -329,7 +383,10 @@ async function startScan() {
   }
 }
 
-// 连接到设备
+/**
+ * 连接到设备
+ * @param {Object} device 设备对象
+ */
 async function connectToDevice(device) {
   try {
     const result = await api?.connectDevice(device.id)
@@ -348,7 +405,9 @@ async function connectToDevice(device) {
   }
 }
 
-// 断开连接
+/**
+ * 断开连接
+ */
 async function disconnect() {
   try {
     const result = await api?.disconnectDevice()
@@ -366,7 +425,9 @@ async function disconnect() {
   }
 }
 
-// 切换悬浮窗口
+/**
+ * 切换悬浮窗口显示/隐藏
+ */
 async function toggleFloatingWindow() {
   try {
     const result = await api?.toggleFloatingWindow()
@@ -378,18 +439,24 @@ async function toggleFloatingWindow() {
   }
 }
 
-// 打开设置页面
+/**
+ * 打开设置页面
+ */
 async function openSettings() {
   await loadFloatingWindowSettings()
   showSettings.value = true
 }
 
-// 关闭设置页面
+/**
+ * 关闭设置页面
+ */
 function closeSettings() {
   showSettings.value = false
 }
 
-// 更新悬浮窗口设置
+/**
+ * 更新悬浮窗口设置
+ */
 async function updateFloatingWindowSettings() {
   try {
     console.log('发送悬浮窗设置:', settings.value)
@@ -402,26 +469,32 @@ async function updateFloatingWindowSettings() {
   }
 }
 
-// 选择样式
+/**
+ * 选择悬浮窗口样式
+ * @param {string} styleId 样式ID
+ */
 async function selectStyle(styleId) {
   settings.value.style = styleId
   await updateFloatingWindowSettings()
 }
 
-// 生命周期钩子
+// ========== 生命周期钩子 ==========
 onMounted(() => {
-  setupHeartRateListener()
-  setupSettingsListener()
-  loadFloatingWindowSettings()
+  setupHeartRateListener()  // 设置心率数据监听
+  setupSettingsListener()  // 设置设置更新监听
+  loadFloatingWindowSettings()  // 加载悬浮窗设置
 })
 
 onUnmounted(() => {
+  // 清理监听器
   api?.removeAllListeners('heart-rate:data')
   api?.removeAllListeners('bluetooth:floatingWindowSettingsUpdated')
   
+  // 断开连接
   if (isConnected.value) {
     disconnect()
   }
+  // 清理定时器
   if (scanInterval.value) {
     clearInterval(scanInterval.value)
   }

@@ -6,55 +6,55 @@
   "main": "electron/main.js",
   "author": "XxinRan",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "electron": "electron .",
-    "electron:build": "npm run build && electron-builder",
-    "electron:dev": "concurrently \"npm run dev\" \"npm run electron\""
+    "dev": "vite", // 启动Vite开发服务器
+    "build": "vite build", // 构建生产版本
+    "preview": "vite preview", // 预览生产构建
+    "electron": "electron .", // 启动Electron应用
+    "electron:build": "npm run build && electron-builder", // 构建Electron应用
+    "electron:dev": "concurrently \"npm run dev\" \"npm run electron\"" // 同时启动开发服务器和Electron
   },
   "build": {
-    "appId": "com.heartrate.dokidoki",
-    "productName": "DokiDoki",
+    "appId": "com.heartrate.dokidoki", // 应用ID
+    "productName": "DokiDoki", // 应用名称
     "directories": {
-      "output": "dist_electron",
-      "buildResources": "build"
+      "output": "dist_electron", // 构建输出目录
+      "buildResources": "build" // 构建资源目录
     },
     "files": [
-      "dist/**/*",
-      "electron/**/*"
+      "dist/**/*", // 包含构建后的前端文件
+      "electron/**/*" // 包含Electron相关文件
     ],
     "win": {
       "target": [
-        "nsis",
-        "portable"
+        "nsis", // Windows安装程序
+        "portable" // 便携版
       ],
-      "icon": "build/icon.ico"
+      "icon": "build/icon.ico" // Windows图标
     },
     "mac": {
       "target": [
-        "dmg",
-        "zip"
+        "dmg", // macOS安装包
+        "zip" // 压缩包
       ],
-      "icon": "build/icon.icns"
+      "icon": "build/icon.icns" // macOS图标
     },
     "linux": {
       "target": [
-        "AppImage",
-        "deb",
-        "rpm"
+        "AppImage", // Linux AppImage格式
+        "deb", // Debian包
+        "rpm" // RPM包
       ],
-      "icon": "build/icon.png"
+      "icon": "build/icon.png" // Linux图标
     }
   },
   "dependencies": {
-    "@abandonware/noble": "^1.9.2-26",
-    "vue": "^3.5.25"
+    "@abandonware/noble": "^1.9.2-26", // 蓝牙设备扫描和连接库
+    "vue": "^3.5.25" // Vue 3框架
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^6.0.2",
-    "electron": "^40.6.0",
-    "electron-builder": "^26.8.1",
-    "vite": "^7.3.1"
+    "@vitejs/plugin-vue": "^6.0.2", // Vite的Vue插件
+    "electron": "^40.6.0", // Electron框架
+    "electron-builder": "^26.8.1", // Electron应用打包工具
+    "vite": "^7.3.1" // Vite构建工具
   }
 }
